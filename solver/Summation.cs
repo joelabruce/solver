@@ -8,9 +8,9 @@ namespace solver
 {
     public class Summation
     {
-        public int Start { get; private set; }
-        public int End { get; private set; }
-        public Summation(int start, int end)
+        public long Start { get; private set; }
+        public long End { get; private set; }
+        public Summation(long start, long end)
         {
             Start = start;
             End = end;
