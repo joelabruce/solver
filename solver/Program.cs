@@ -11,38 +11,31 @@ namespace solver
     {
         static void Main(string[] args)
         {
-            Stopwatch sw = new Stopwatch();
-
-            // Time how long the algorithm takes to complete and then print results
-            sw.Start();
             // Anything larger will result in numeric overflow
-            //var x = TripletsAsync(64, 10000000000, 0).Result;     // Takes about 15-20 seconds
-            //var x = TripletsAsync(14, 1000000000, 0).Result;
-            //var x = TripletsAsync(1, 1000000000, 0).Result;
-            //var x = TripletsAsync(16, 218, 0).Result;
-            sw.Stop();
+            //var (ms, r) = Timer(() => TripletsAsync(12, 100000000000, 0).Result); // 3229849966403158016 - Incorrect answer because of overflow
+            //var (ms, r) = Timer(() => TripletsAsync(12, 10000000000, 0).Result);  // 8333333328333343872 - Might be correct, or could be off due to overflow
+            //var (ms, r) = Timer(() => TripletsAsync(12, 1000000000, 0).Result);   // 83333332833333456 - Probably wrong due to overflow (83333333333333333)
+            //var (ms, r) = Timer(() => TripletsAsync(12, 100000000, 0).Result);   // 833333283333334 - Probably wrong due to rounding errors
 
-            //Console.WriteLine($"{x} in {sw.ElapsedMilliseconds}ms");
+            long T = 10000000;
+            long tolerance = 1000;
 
+            var tms = Timed(() =>
+            {
+                // 3 segments seems to be the magic number for performance
+                for (long i = T; i <= T + tolerance; i++)
+                {
+                    var j = i;
+                    var (ms, r) = TimedFunc(() => TripletsAsync(4, j, 0).Result);
+                    Console.WriteLine($"{r} in {ms}ms");
+                    Console.WriteLine($"{_.TotalTriplets(j)}");  //833333333333333
+                }
+            });
+
+            Console.WriteLine($"Total ms: {tms}, Avg: {tms / tolerance}");
             //return;
 
-            for (int T = 218; T <= 300; T++)
-            {
-                //Console.Clear();
-                //Console.WriteLine($"{SumGenerator.RecursiveTuple(4, T, U, i, 0)}");
-                //SumGenerator.RecursiveTuple(5, T, U, i, 0, (indices) => Console.WriteLine(string.Join(", ", indices)));
-                //SumGenerator.UniverseGenerator(T, (indices) => Console.WriteLine(string.Join(", ", indices)));
-                var n = SumGenerator.nFromT(T);
-                
-                Console.Write($"{T},,{n},{Math.Pow(2,n)},");
-                SumGenerator.UniverseGenerator(T, null, (d, solutions) =>
-                {
-                    Console.Write($",{solutions}");
-                });
-
-                //Console.ReadLine();
-                Console.WriteLine();
-            }
+            //GenerateAllSolutionsForT(1, 123);
 
             //sw.Stop();
             //Console.WriteLine(x);
@@ -57,25 +50,40 @@ namespace solver
             //}
         }
 
-        //public static void TripletCheck()
-        //{
-        //    long T = 122;
-        //    var ub = SumGenerator.UpperBounds(T, 3, 0);
-        //    var count = 0;
-        //    for (long i = 1; i <= ub; i++)
-        //    {
-        //        var pairs = SumGenerator.GenDoublets(T, i);
-        //        var thisCount = pairs.Count();
-        //        count += thisCount;
-        //        Console.WriteLine($"Total pairs for head of {i} = {thisCount}");
-        //        foreach (var pair in pairs)
-        //        {
-        //            Console.WriteLine($"{i}, {pair}");
-        //        }
-        //    }
+        public static (long, T) TimedFunc<T>(Func<T> process)
+        {
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
+            T r = process.Invoke();
+            sw.Stop();
 
-        //    Console.WriteLine(count);
-        //}
+            return (sw.ElapsedMilliseconds, r);
+        }
+
+        public static long Timed(Action process)
+        {
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
+            process.Invoke();
+            sw.Stop();
+
+            return sw.ElapsedMilliseconds;
+        }
+
+        public static void GenerateAllSolutionsForT(long start, long end) {
+            for (long T = start; T <= end; T++)
+            {
+                var n = _.nFromT(T);
+
+                Console.Write($"{T},,{n},{Math.Pow(2, n)},");
+                _.UniverseGenerator(T, null, (d, solutions) =>
+                {
+                    Console.Write($",{solutions}");
+                });
+
+                Console.WriteLine();
+            }
+        }
 
         public static void OperandTest()
         {
@@ -90,9 +98,9 @@ namespace solver
 
         public static async Task<long> TripletsAsync(long threads, long T, long offset)
         {
-            var bound3 = SumGenerator.UpperBounds(T, 3, 0);
+            var bound3 = _.UpperBounds(T, 3, 0);
 
-            Segment[] segments = SumGenerator.FrontLoadedThreadSegmentGenerator(threads, bound3);
+            Segment[] segments = _.FrontLoadedThreadSegmentGenerator(threads, bound3);
             var segmentCount = segments.Length;
 
 
@@ -121,32 +129,9 @@ namespace solver
             long count = 0;
             for (long i = segmentStart; i <= segmentEnd; i++)
             {
-                var bound2 = SumGenerator.UpperBounds(T, 2, i);
+                var bound2 = _.UpperBounds(T, 2, i);
                 var step = bound2 - i;
                 count += step;
-            }
-
-            return count;
-        }
-
-        public static long GenTriplets(long T, bool write = false)
-        {
-            long[] U = new long[3];
-            long[] i = new long[3];
-            long count = 0;
-
-            U[2] = SumGenerator.U(3, T, 0);
-            for (i[0] = 1; i[0] <= U[2]; i[0]++)
-            {
-                U[1] = SumGenerator.U(2, T, i[0]);
-                for (i[1] = i[0] + 1; i[1] <= U[1]; i[1]++)
-                {
-                    U[0] = SumGenerator.U(1, T, i[0] + i[1]);
-                    i[2] = U[0];
-                    if (write) Console.WriteLine(string.Join(", ", i));
-
-                    count++;
-                }
             }
 
             return count;
@@ -158,16 +143,16 @@ namespace solver
             long[] i = new long[4];
             long count = 0;
 
-            U[3] = SumGenerator.U(4, T, 0);
+            U[3] = _.U(4, T, 0);
             for (i[3] = 1; i[3] <= U[3]; i[3]++)
             {
-                U[2] = SumGenerator.U(3, T, i[3]);
+                U[2] = _.U(3, T, i[3]);
                 for (i[2] = i[3] + 1; i[2] <= U[2]; i[2]++)
                 {
-                    U[1] = SumGenerator.U(2, T, i[3] + i[2]);
+                    U[1] = _.U(2, T, i[3] + i[2]);
                     for (i[1] = i[2] + 1; i[1] <= U[1]; i[1]++)
                     {
-                        U[0] = SumGenerator.U(1, T, i[3] + i[2] + i[1]);
+                        U[0] = _.U(1, T, i[3] + i[2] + i[1]);
 
 
                         i[0] = U[0];
@@ -181,50 +166,17 @@ namespace solver
             return count;
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="tupleSize"></param>
-        /// <param name="T">Target sum.</param>
-        /// <param name="U">Upperbound for a given dimension.</param>
-        /// <param name="i">Index for a given dimension.</param>
-        /// <param name="lowerbound">Accumulated lower bounds.</param>
-        /// <param name="write">Outputs to console if true.</param>
-        /// <returns></returns>
-        //public static long RecursiveTuple(long tupleSize, long T, long[] U, long[] i, long lowerbound = 0, bool write = false)
-        //{
-        //    long nextLayer = tupleSize - 1;
-        //    U[nextLayer] = SumGenerator.U(tupleSize, T, lowerbound);
-        //    long count = 0;
-
-        //    if (nextLayer == 0)
-        //    {
-        //        i[0] = U[0];
-        //        if (write) Console.WriteLine(string.Join(", ", i));
-        //        return 1;
-        //    }
-        //    else
-        //    {
-        //        for (i[nextLayer] = i[tupleSize] + 1; i[nextLayer] <= U[nextLayer]; i[nextLayer]++)
-        //        {
-        //            count += RecursiveTuple(tupleSize - 1, T, U, i, lowerbound + i[nextLayer], write);
-        //        }
-        //    }
-
-        //    return count;
-        //}
-
         public static void Quadruplets(long T)
         {
             long count = 0;
 
-            var bound4 = SumGenerator.UpperBounds(T, 4, 0);
+            var bound4 = _.UpperBounds(T, 4, 0);
             for (long i = 1; i <= bound4; i++)
             {
-                var bound3 = SumGenerator.UpperBounds(T, 3, i);
+                var bound3 = _.UpperBounds(T, 3, i);
                 for (long j = i + 1; j <= bound3; j++)
                 {
-                    var bound2 = SumGenerator.UpperBounds(T, 2, i + j);
+                    var bound2 = _.UpperBounds(T, 2, i + j);
 
                     var step = bound2 - j;
                     count += step;
@@ -236,29 +188,29 @@ namespace solver
 
         public static void TestMethodSextuplets(long T)
         {
-            var n = SumGenerator.nFromT(T);
+            var n = _.nFromT(T);
             Console.WriteLine($"n = {n}");
 
             long count = 0;
 
             // Sextuplets
-            var bounds6 = SumGenerator.UpperBounds(T, 6, 0);
+            var bounds6 = _.UpperBounds(T, 6, 0);
             for (long g = 1; g <= bounds6; g++)
             {
                 // Quintuplets
-                var bounds5 = SumGenerator.UpperBounds(T, 5, g);
+                var bounds5 = _.UpperBounds(T, 5, g);
                 for (long h = g + 1; h <= bounds5; h++)
                 {
                     // Quadruplets
-                    var bounds4 = SumGenerator.UpperBounds(T, 4, g + h);
+                    var bounds4 = _.UpperBounds(T, 4, g + h);
                     for (long i = h + 1; i <= bounds4; i++)
                     {
                         // Triplets
-                        var bounds3 = SumGenerator.UpperBounds(T, 3, g + h + i);
+                        var bounds3 = _.UpperBounds(T, 3, g + h + i);
                         for (long j = i + 1; j <= bounds3; j++)
                         {
                             //Doublets
-                            var bounds2 = SumGenerator.UpperBounds(T, 2, g + h + i + j);
+                            var bounds2 = _.UpperBounds(T, 2, g + h + i + j);
                             for (long k = j + 1; k <= bounds2; k++)
                             {
                                 var l = T - (g + h + i + j + k);
@@ -274,29 +226,29 @@ namespace solver
 
         public static void TestMethod2(long T)
         {
-            var n = SumGenerator.nFromT(T);
+            var n = _.nFromT(T);
             Console.WriteLine($"n = {n}");
 
             long count = 0;
 
             // Sextuplets
-            var bounds6 = SumGenerator.UpperBounds(T, 6, 0);
+            var bounds6 = _.UpperBounds(T, 6, 0);
             for (long g = 1; g <= bounds6; g++)
             {
                 // Qulonguplets
-                var bounds5 = SumGenerator.UpperBounds(T, 5, g);
+                var bounds5 = _.UpperBounds(T, 5, g);
                 for (long h = g + 1; h <= bounds5; h++)
                 {
                     // Quadruplets
-                    var bounds4 = SumGenerator.UpperBounds(T, 4, g + h);
+                    var bounds4 = _.UpperBounds(T, 4, g + h);
                     for (long i = h + 1; i <= bounds4; i++)
                     {
                         // Triplets
-                        var bounds3 = SumGenerator.UpperBounds(T, 3, g + h + i);
+                        var bounds3 = _.UpperBounds(T, 3, g + h + i);
                         for (long j = i + 1; j <= bounds3; j++)
                         {
                             //Doublets
-                            var bounds2 = SumGenerator.UpperBounds(T, 2, g + h + i + j);
+                            var bounds2 = _.UpperBounds(T, 2, g + h + i + j);
                             count += (bounds2 - j);
                         }
                     }
@@ -308,31 +260,31 @@ namespace solver
 
         public static void TestMethod3(long T)
         {
-            var n = SumGenerator.nFromT(T);
+            var n = _.nFromT(T);
             Console.WriteLine($"n = {n}");
 
             long count = 0;
 
             // Sextuplets
-            var bounds6 = SumGenerator.UpperBounds(T, 6, 0);
+            var bounds6 = _.UpperBounds(T, 6, 0);
             for (long g = 1; g <= bounds6; g++)
             {
                 // Qulonguplets
-                var bounds5 = SumGenerator.UpperBounds(T, 5, g);
+                var bounds5 = _.UpperBounds(T, 5, g);
                 for (long h = g + 1; h <= bounds5; h++)
                 {
                     // Quadruplets
-                    var bounds4 = SumGenerator.UpperBounds(T, 4, g + h);
+                    var bounds4 = _.UpperBounds(T, 4, g + h);
                     for (long i = h + 1; i <= bounds4; i++)
                     {
                         Console.WriteLine();
 
                         // Triplets
-                        var bounds3 = SumGenerator.UpperBounds(T, 3, g + h + i);
+                        var bounds3 = _.UpperBounds(T, 3, g + h + i);
                         for (long j = i + 1; j <= bounds3; j++)
                         {
                             //Doublets
-                            var bounds2 = SumGenerator.UpperBounds(T, 2, g + h + i + j);
+                            var bounds2 = _.UpperBounds(T, 2, g + h + i + j);
 
                             var step = bounds2 - j;
                             count += step;

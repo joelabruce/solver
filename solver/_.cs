@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace solver
 {
-    public class SumGenerator
+    public class _
     {
         public static long UniverseGenerator(long T, Action<long[]> tupleSolutionProcessor = null, Action<long, long> tuplesOfDProcessor = null)
         {
@@ -98,7 +98,7 @@ namespace solver
         public static async Task<long> RecursiveTupleAsync(long tupleSize, long T, long[] U, long[] i, long lowerbound = 0, Action<long[]> tuplesolutionProcessor = null)
         {
             long nextLayer = tupleSize - 1;
-            U[nextLayer] = SumGenerator.U(tupleSize, T, lowerbound);
+            U[nextLayer] = _.U(tupleSize, T, lowerbound);
             long count = 0;
 
             if (nextLayer == 0)
@@ -118,7 +118,6 @@ namespace solver
             return count;
         }
 
-
         /// <summary>
         /// Generates all tuples that sum to T for a give tupleSize.
         /// </summary>
@@ -132,7 +131,7 @@ namespace solver
         public static long RecursiveTuple(long tupleSize, long T, long[] U, long[] i, long lowerbound = 0, Action<long[]> tuplesolutionProcessor = null)
         {
             long nextLayer = tupleSize - 1;
-            U[nextLayer] = SumGenerator.U(tupleSize, T, lowerbound);
+            U[nextLayer] = _.U(tupleSize, T, lowerbound);
             long count = 0;
 
             if (nextLayer == 0)
@@ -159,10 +158,10 @@ namespace solver
         /// <returns></returns>
         public static long TotalTriplets(long T)
         {
-            var U2 = SumGenerator.U(2, T, 1);
+            var U2 = _.U(2, T, 1);
             var U2over3 = U2 / 3;
 
-            var U2Sum = SumGenerator.Sum1ToNExclusive(U2);
+            var U2Sum = _.Sum1ToNExclusive(U2);
             var overshot = 3 * (U2over3 * U2over3 + U2over3) / 2;
 
             var r = T % 3;
@@ -195,6 +194,13 @@ namespace solver
             return (long) MathF.Floor((T - Sum1ToNExclusive(setSize) - offset) / setSize);
         }
 
+        /// <summary>
+        /// Calculates U_f.
+        /// </summary>
+        /// <param name="setSize"></param>
+        /// <param name="T"></param>
+        /// <param name="offset"></param>
+        /// <returns></returns>
         public static long U(long setSize, long T, long offset)
         {
             return (long) MathF.Floor((T - Sum1ToNExclusive(setSize) - offset) / setSize);
