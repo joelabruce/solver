@@ -14,21 +14,34 @@ namespace solver
             Stopwatch sw = new Stopwatch();
 
             // Time how long the algorithm takes to complete and then print results
-            //sw.Start();
+            sw.Start();
             // Anything larger will result in numeric overflow
-            //var x = TripletsAsync(10000000000, 0).Result;     // Takes about 15-20 seconds
-            //var x = TripletsAsync(123, 0).Result;
+            //var x = TripletsAsync(64, 10000000000, 0).Result;     // Takes about 15-20 seconds
+            //var x = TripletsAsync(14, 1000000000, 0).Result;
+            //var x = TripletsAsync(1, 1000000000, 0).Result;
+            //var x = TripletsAsync(16, 218, 0).Result;
+            sw.Stop();
 
-            var n = 5;
-            long[] U = new long[n];
-            long[] i = new long[n + 1];
+            //Console.WriteLine($"{x} in {sw.ElapsedMilliseconds}ms");
 
-            for (int T = 15; T <= 123; T++)
+            //return;
+
+            for (int T = 218; T <= 300; T++)
             {
-                Console.Clear();
+                //Console.Clear();
                 //Console.WriteLine($"{SumGenerator.RecursiveTuple(4, T, U, i, 0)}");
-                SumGenerator.RecursiveTuple(5, T, U, i, 0, true);
-                Console.ReadLine();
+                //SumGenerator.RecursiveTuple(5, T, U, i, 0, (indices) => Console.WriteLine(string.Join(", ", indices)));
+                //SumGenerator.UniverseGenerator(T, (indices) => Console.WriteLine(string.Join(", ", indices)));
+                var n = SumGenerator.nFromT(T);
+                
+                Console.Write($"{T},,{n},{Math.Pow(2,n)},");
+                SumGenerator.UniverseGenerator(T, null, (d, solutions) =>
+                {
+                    Console.Write($",{solutions}");
+                });
+
+                //Console.ReadLine();
+                Console.WriteLine();
             }
 
             //sw.Stop();
@@ -75,30 +88,16 @@ namespace solver
             Console.WriteLine(operands[2].ToExpression());
         }
 
-        public static async Task<long> TripletsAsync(long T, long offset)
+        public static async Task<long> TripletsAsync(long threads, long T, long offset)
         {
-            long threads = 12;
             var bound3 = SumGenerator.UpperBounds(T, 3, 0);
-            if (threads > bound3)
-            {
-                threads = bound3;
-            }
 
-            var segmentSize = bound3 / threads;
+            Segment[] segments = SumGenerator.FrontLoadedThreadSegmentGenerator(threads, bound3);
+            var segmentCount = segments.Length;
 
-            var remainder = bound3 % threads;
 
-            Segment[] segments = new Segment[threads];
-            for (int i = 0; i < threads; i++)
-            {
-                segments[i].Start = segmentSize * i + 1;
-                segments[i].End = segmentSize * (i + 1);
-            }
-
-            Task<long>[] tasks = new Task<long>[threads];
-
-            // Experimental, make sure not to use the threadCounter, but create a new variable because of closure
-            for (int taskIndex = 0; taskIndex < threads - 1; taskIndex++)
+            Task<long>[] tasks = new Task<long>[segmentCount];
+            for (int taskIndex = 0; taskIndex < segmentCount; taskIndex++)
             {
                 int i = taskIndex;
                 tasks[i] = Task.Factory.StartNew(
@@ -110,7 +109,6 @@ namespace solver
                     TaskCreationOptions.LongRunning
                 );
             }
-            tasks[threads - 1] = Task.Factory.StartNew(() => TripletChunk(T, segments[threads - 1].Start, bound3), TaskCreationOptions.LongRunning);
 
             // Asynchronously
             var counts = await Task.WhenAll(tasks);
