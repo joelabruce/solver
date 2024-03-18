@@ -17,18 +17,22 @@ namespace solver
             //var (ms, r) = Timer(() => TripletsAsync(12, 1000000000, 0).Result);   // 83333332833333456 - Probably wrong due to overflow (83333333333333333)
             //var (ms, r) = Timer(() => TripletsAsync(12, 100000000, 0).Result);   // 833333283333334 - Probably wrong due to rounding errors
 
-            long T = 10000000;
-            long tolerance = 1000;
-
+            long T = (long) Math.Pow(10, 10);
+            long tolerance = 100;
+            const long desiredTaskCount = 4;
             var tms = Timed(() =>
             {
                 // 3 segments seems to be the magic number for performance
                 for (long i = T; i <= T + tolerance; i++)
                 {
                     var j = i;
-                    var (ms, r) = TimedFunc(() => TripletsAsync(4, j, 0).Result);
+
+                    Console.WriteLine(j);
+                    var (ms, r) = TimedFunc(() => TripletsAsync(desiredTaskCount, j).Result);
                     Console.WriteLine($"{r} in {ms}ms");
-                    Console.WriteLine($"{_.TotalTriplets(j)}");  //833333333333333
+
+                    var (msf, rf) = TimedFunc(() => _.StrictPartitionTriplets(j));
+                    Console.WriteLine($"{rf} in {msf}ms (e)");
                 }
             });
 
@@ -52,7 +56,7 @@ namespace solver
 
         public static (long, T) TimedFunc<T>(Func<T> process)
         {
-            Stopwatch sw = new Stopwatch();
+            Stopwatch sw = new();
             sw.Start();
             T r = process.Invoke();
             sw.Stop();
@@ -96,15 +100,20 @@ namespace solver
             Console.WriteLine(operands[2].ToExpression());
         }
 
-        public static async Task<long> TripletsAsync(long threads, long T, long offset)
+        public static async Task<BigInteger> TripletsAsync(long threads, BigInteger T)
         {
-            var bound3 = _.UpperBounds(T, 3, 0);
+            var bound3 = _.U_(3, T, 0);
 
-            Segment[] segments = _.FrontLoadedThreadSegmentGenerator(threads, bound3);
+            if (bound3 > long.MaxValue)
+            {
+                Console.WriteLine($"{long.MaxValue} $ {bound3.ToString()}");
+                Console.WriteLine($"{bound3 > long.MaxValue}");
+            }
+
+            Segment[] segments = _.FrontLoadedThreadSegmentGenerator(threads, (long) bound3);
             var segmentCount = segments.Length;
 
-
-            Task<long>[] tasks = new Task<long>[segmentCount];
+            Task<BigInteger>[] tasks = new Task<BigInteger>[segmentCount];
             for (int taskIndex = 0; taskIndex < segmentCount; taskIndex++)
             {
                 int i = taskIndex;
@@ -121,15 +130,21 @@ namespace solver
             // Asynchronously
             var counts = await Task.WhenAll(tasks);
 
-            return counts.Sum();
+            BigInteger result = 0;
+            foreach(var count in counts)
+            {
+                result += count;
+            }
+
+            return result;
         }
 
-        public static long TripletChunk(long T, long segmentStart, long segmentEnd)
+        public static BigInteger TripletChunk(BigInteger T, long segmentStart, long segmentEnd)
         {
-            long count = 0;
+            BigInteger count = 0;
             for (long i = segmentStart; i <= segmentEnd; i++)
             {
-                var bound2 = _.UpperBounds(T, 2, i);
+                var bound2 = _.U_(2, T, new BigInteger(i));
                 var step = bound2 - i;
                 count += step;
             }
@@ -166,136 +181,136 @@ namespace solver
             return count;
         }
 
-        public static void Quadruplets(long T)
-        {
-            long count = 0;
+        //public static void Quadruplets(long T)
+        //{
+        //    long count = 0;
 
-            var bound4 = _.UpperBounds(T, 4, 0);
-            for (long i = 1; i <= bound4; i++)
-            {
-                var bound3 = _.UpperBounds(T, 3, i);
-                for (long j = i + 1; j <= bound3; j++)
-                {
-                    var bound2 = _.UpperBounds(T, 2, i + j);
+        //    var bound4 = _.UpperBounds(T, 4, 0);
+        //    for (long i = 1; i <= bound4; i++)
+        //    {
+        //        var bound3 = _.UpperBounds(T, 3, i);
+        //        for (long j = i + 1; j <= bound3; j++)
+        //        {
+        //            var bound2 = _.UpperBounds(T, 2, i + j);
 
-                    var step = bound2 - j;
-                    count += step;
-                }
-            }
+        //            var step = bound2 - j;
+        //            count += step;
+        //        }
+        //    }
 
-            Console.WriteLine(count);
-        }
+        //    Console.WriteLine(count);
+        //}
 
-        public static void TestMethodSextuplets(long T)
-        {
-            var n = _.nFromT(T);
-            Console.WriteLine($"n = {n}");
+        //public static void TestMethodSextuplets(long T)
+        //{
+        //    var n = _.nFromT(T);
+        //    Console.WriteLine($"n = {n}");
 
-            long count = 0;
+        //    long count = 0;
 
-            // Sextuplets
-            var bounds6 = _.UpperBounds(T, 6, 0);
-            for (long g = 1; g <= bounds6; g++)
-            {
-                // Quintuplets
-                var bounds5 = _.UpperBounds(T, 5, g);
-                for (long h = g + 1; h <= bounds5; h++)
-                {
-                    // Quadruplets
-                    var bounds4 = _.UpperBounds(T, 4, g + h);
-                    for (long i = h + 1; i <= bounds4; i++)
-                    {
-                        // Triplets
-                        var bounds3 = _.UpperBounds(T, 3, g + h + i);
-                        for (long j = i + 1; j <= bounds3; j++)
-                        {
-                            //Doublets
-                            var bounds2 = _.UpperBounds(T, 2, g + h + i + j);
-                            for (long k = j + 1; k <= bounds2; k++)
-                            {
-                                var l = T - (g + h + i + j + k);
-                                count++;
-                            }
-                        }
-                    }
-                }
-            }
+        //    // Sextuplets
+        //    var bounds6 = _.UpperBounds(T, 6, 0);
+        //    for (long g = 1; g <= bounds6; g++)
+        //    {
+        //        // Quintuplets
+        //        var bounds5 = _.UpperBounds(T, 5, g);
+        //        for (long h = g + 1; h <= bounds5; h++)
+        //        {
+        //            // Quadruplets
+        //            var bounds4 = _.UpperBounds(T, 4, g + h);
+        //            for (long i = h + 1; i <= bounds4; i++)
+        //            {
+        //                // Triplets
+        //                var bounds3 = _.UpperBounds(T, 3, g + h + i);
+        //                for (long j = i + 1; j <= bounds3; j++)
+        //                {
+        //                    //Doublets
+        //                    var bounds2 = _.UpperBounds(T, 2, g + h + i + j);
+        //                    for (long k = j + 1; k <= bounds2; k++)
+        //                    {
+        //                        var l = T - (g + h + i + j + k);
+        //                        count++;
+        //                    }
+        //                }
+        //            }
+        //        }
+        //    }
 
-            Console.WriteLine(count);
-        }
+        //    Console.WriteLine(count);
+        //}
 
-        public static void TestMethod2(long T)
-        {
-            var n = _.nFromT(T);
-            Console.WriteLine($"n = {n}");
+        //public static void TestMethod2(long T)
+        //{
+        //    var n = _.nFromT(T);
+        //    Console.WriteLine($"n = {n}");
 
-            long count = 0;
+        //    long count = 0;
 
-            // Sextuplets
-            var bounds6 = _.UpperBounds(T, 6, 0);
-            for (long g = 1; g <= bounds6; g++)
-            {
-                // Qulonguplets
-                var bounds5 = _.UpperBounds(T, 5, g);
-                for (long h = g + 1; h <= bounds5; h++)
-                {
-                    // Quadruplets
-                    var bounds4 = _.UpperBounds(T, 4, g + h);
-                    for (long i = h + 1; i <= bounds4; i++)
-                    {
-                        // Triplets
-                        var bounds3 = _.UpperBounds(T, 3, g + h + i);
-                        for (long j = i + 1; j <= bounds3; j++)
-                        {
-                            //Doublets
-                            var bounds2 = _.UpperBounds(T, 2, g + h + i + j);
-                            count += (bounds2 - j);
-                        }
-                    }
-                }
-            }
+        //    // Sextuplets
+        //    var bounds6 = _.UpperBounds(T, 6, 0);
+        //    for (long g = 1; g <= bounds6; g++)
+        //    {
+        //        // Qulonguplets
+        //        var bounds5 = _.UpperBounds(T, 5, g);
+        //        for (long h = g + 1; h <= bounds5; h++)
+        //        {
+        //            // Quadruplets
+        //            var bounds4 = _.UpperBounds(T, 4, g + h);
+        //            for (long i = h + 1; i <= bounds4; i++)
+        //            {
+        //                // Triplets
+        //                var bounds3 = _.UpperBounds(T, 3, g + h + i);
+        //                for (long j = i + 1; j <= bounds3; j++)
+        //                {
+        //                    //Doublets
+        //                    var bounds2 = _.UpperBounds(T, 2, g + h + i + j);
+        //                    count += (bounds2 - j);
+        //                }
+        //            }
+        //        }
+        //    }
 
-            Console.WriteLine(count);
-        }
+        //    Console.WriteLine(count);
+        //}
 
-        public static void TestMethod3(long T)
-        {
-            var n = _.nFromT(T);
-            Console.WriteLine($"n = {n}");
+        //public static void TestMethod3(long T)
+        //{
+        //    var n = _.nFromT(T);
+        //    Console.WriteLine($"n = {n}");
 
-            long count = 0;
+        //    long count = 0;
 
-            // Sextuplets
-            var bounds6 = _.UpperBounds(T, 6, 0);
-            for (long g = 1; g <= bounds6; g++)
-            {
-                // Qulonguplets
-                var bounds5 = _.UpperBounds(T, 5, g);
-                for (long h = g + 1; h <= bounds5; h++)
-                {
-                    // Quadruplets
-                    var bounds4 = _.UpperBounds(T, 4, g + h);
-                    for (long i = h + 1; i <= bounds4; i++)
-                    {
-                        Console.WriteLine();
+        //    // Sextuplets
+        //    var bounds6 = _.UpperBounds(T, 6, 0);
+        //    for (long g = 1; g <= bounds6; g++)
+        //    {
+        //        // Qulonguplets
+        //        var bounds5 = _.UpperBounds(T, 5, g);
+        //        for (long h = g + 1; h <= bounds5; h++)
+        //        {
+        //            // Quadruplets
+        //            var bounds4 = _.UpperBounds(T, 4, g + h);
+        //            for (long i = h + 1; i <= bounds4; i++)
+        //            {
+        //                Console.WriteLine();
 
-                        // Triplets
-                        var bounds3 = _.UpperBounds(T, 3, g + h + i);
-                        for (long j = i + 1; j <= bounds3; j++)
-                        {
-                            //Doublets
-                            var bounds2 = _.UpperBounds(T, 2, g + h + i + j);
+        //                // Triplets
+        //                var bounds3 = _.UpperBounds(T, 3, g + h + i);
+        //                for (long j = i + 1; j <= bounds3; j++)
+        //                {
+        //                    //Doublets
+        //                    var bounds2 = _.UpperBounds(T, 2, g + h + i + j);
 
-                            var step = bounds2 - j;
-                            count += step;
+        //                    var step = bounds2 - j;
+        //                    count += step;
 
-                            Console.WriteLine($"{g}, {h}, {i}, {j}: {step} % {j % 3}");
-                        }
-                    }
-                }
-            }
+        //                    Console.WriteLine($"{g}, {h}, {i}, {j}: {step} % {j % 3}");
+        //                }
+        //            }
+        //        }
+        //    }
 
-            Console.WriteLine(count);
-        }
+        //    Console.WriteLine(count);
+        //}
     }
 }

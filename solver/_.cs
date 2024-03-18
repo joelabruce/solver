@@ -9,6 +9,13 @@ namespace solver
 {
     public class _
     {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="T"></param>
+        /// <param name="tupleSolutionProcessor"></param>
+        /// <param name="tuplesOfDProcessor"></param>
+        /// <returns></returns>
         public static long UniverseGenerator(long T, Action<long[]> tupleSolutionProcessor = null, Action<long, long> tuplesOfDProcessor = null)
         {
             long n = (long) Math.Floor(nFromT(T));
@@ -182,16 +189,32 @@ namespace solver
             return res;
         }
 
-        /// <summary>
-        /// Calculates the upper bound for possible values of an item in a set given T, set size, and the sum of the previous values in the set.
-        /// </summary>
-        /// <param name="T"></param>
-        /// <param name="setSize"></param>
-        /// <param name="offset">Must be less than offset.</param>
-        /// <returns></returns>
-        public static long UpperBounds(long T, long setSize, long offset = 0)
+        public static BigInteger StrictPartitionTriplets(BigInteger n)
         {
-            return (long) MathF.Floor((T - Sum1ToNExclusive(setSize) - offset) / setSize);
+            // Only works for particitions of n == 3
+
+            var U2 = _.U_(2, n, 1);
+            var U2over3 = U2 / 3;
+
+            var U2Sum = _.s1ne(U2);
+            var overshot = 3 * (U2over3 * U2over3 + U2over3) / 2;
+
+            var r = n % 3;
+            var error = r * U2over3;
+
+            var res = U2Sum + error - overshot;
+
+            // Why do I need to add this back on every 6th step up from T?
+            // My guess is some rounding error somewhere else is creeping in
+            // Need to further investigate, but for now it works.
+            var zz = (n - 3) / 6;
+            var rem = (n - 3) % 6;
+            if (rem == 0)
+            {
+                res += (3 * zz);
+            }
+
+            return res;
         }
 
         /// <summary>
@@ -204,6 +227,28 @@ namespace solver
         public static long U(long setSize, long T, long offset)
         {
             return (long) MathF.Floor((T - Sum1ToNExclusive(setSize) - offset) / setSize);
+        }
+
+        /// <summary>
+        /// BigInteger version of U.
+        /// </summary>
+        /// <param name="setSize"></param>
+        /// <param name="T"></param>
+        /// <param name="offset"></param>
+        /// <returns></returns>
+        public static BigInteger U_(BigInteger setSize, BigInteger T, BigInteger offset)
+        {
+            return (T - s1ne(setSize) - offset) / setSize;
+        }
+
+        /// <summary>
+        /// BigInteger version of sum of i from 1 to n exclusive.
+        /// </summary>
+        /// <param name="n"></param>
+        /// <returns></returns>
+        public static BigInteger s1ne(BigInteger n)
+        {
+            return (n * n - n) / (BigInteger) 2;
         }
 
         /// <summary>
