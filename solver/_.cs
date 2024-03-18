@@ -16,20 +16,18 @@ namespace solver
         /// <param name="tupleSolutionProcessor"></param>
         /// <param name="tuplesOfDProcessor"></param>
         /// <returns></returns>
-        public static long UniverseGenerator(long T, Action<long[]> tupleSolutionProcessor = null, Action<long, long> tuplesOfDProcessor = null)
+        public static BigInteger UniverseGenerator(BigInteger T, Action<BigInteger[]> tupleSolutionProcessor = null, Action<BigInteger, BigInteger> tuplesOfDProcessor = null)
         {
             long n = (long) Math.Floor(nFromT(T));
-            long[] U = new long[n];
-            long[] i = new long[n + 1];
-            long count = 0;
-
-            Task<long>[] tasks = new Task<long>[n];
+            BigInteger[] U = new BigInteger[n];
+            BigInteger[] i = new BigInteger[n + 1];
+            BigInteger count = 0;
 
             // Because of the way arrays are accessed and modified in the recursive function, always ascend the layers, do not descend the layers.
             // Descending will cause unexpected results.
             for (long d = 1; d <= n; d++)
             {
-                var totalSolutionsForD = RecursiveTuple(d, T, U, i, 0, tupleSolutionProcessor);
+                var totalSolutionsForD = RecursiveTupleBI(d, T, U, i, 0, tupleSolutionProcessor);
                 tuplesOfDProcessor?.Invoke(d, totalSolutionsForD);
                 count += totalSolutionsForD;
             }
@@ -97,32 +95,10 @@ namespace solver
         /// </summary>
         /// <param name="T"></param>
         /// <returns></returns>
-        public static double nFromT(long T)
+        public static double nFromT(BigInteger T)
         {
-            return Math.Sqrt(2 * T + .25) - .5;
-        }
-
-        public static async Task<long> RecursiveTupleAsync(long tupleSize, long T, long[] U, long[] i, long lowerbound = 0, Action<long[]> tuplesolutionProcessor = null)
-        {
-            long nextLayer = tupleSize - 1;
-            U[nextLayer] = _.U(tupleSize, T, lowerbound);
-            long count = 0;
-
-            if (nextLayer == 0)
-            {
-                i[0] = U[0];
-                tuplesolutionProcessor?.Invoke(i);
-                count = 1;
-            }
-            else
-            {
-                for (i[nextLayer] = i[tupleSize] + 1; i[nextLayer] <= U[nextLayer]; i[nextLayer]++)
-                {
-                    count += await RecursiveTupleAsync(tupleSize - 1, T, U, i, lowerbound + i[nextLayer], tuplesolutionProcessor);
-                }
-            }
-
-            return count;
+            var f = (double) (2 * T) + .25;
+            return Math.Sqrt(f) - .5;
         }
 
         /// <summary>
@@ -135,58 +111,42 @@ namespace solver
         /// <param name="lowerbound">Accumulated lower bounds.</param>
         /// <param name="tuplesolutionProcessor">Action to take on solution tuple.</param>
         /// <returns></returns>
-        public static long RecursiveTuple(long tupleSize, long T, long[] U, long[] i, long lowerbound = 0, Action<long[]> tuplesolutionProcessor = null)
+        public static BigInteger RecursiveTupleBI(long tupleSize, BigInteger T, BigInteger[] U, BigInteger[] i, BigInteger lowerbound, Action<BigInteger[]> tupleProc)
         {
-            long nextLayer = tupleSize - 1;
-            U[nextLayer] = _.U(tupleSize, T, lowerbound);
-            long count = 0;
+            var nextLayer = tupleSize - 1;
+            U[nextLayer] = _.U_(tupleSize, T, lowerbound);
+            BigInteger count = 0;
 
             if (nextLayer == 0)
             {
                 i[0] = U[0];
-                tuplesolutionProcessor?.Invoke(i);
+                tupleProc?.Invoke(i);
                 count = 1;
             }
             else
             {
                 for (i[nextLayer] = i[tupleSize] + 1; i[nextLayer] <= U[nextLayer]; i[nextLayer]++)
                 {
-                    count += RecursiveTuple(tupleSize - 1, T, U, i, lowerbound + i[nextLayer], tuplesolutionProcessor);
+                    count += RecursiveTupleBI(tupleSize - 1, T, U, i, lowerbound + i[nextLayer], tupleProc);
                 }
             }
 
             return count;
         }
 
-        /// <summary>
-        /// Given patterns in how triplets are generated, predicts accuratelyup to T = 124.
-        /// </summary>
-        /// <param name="T"></param>
-        /// <returns></returns>
-        public static long TotalTriplets(long T)
+        public static BigInteger ExperimentalTotalTriplets(BigInteger T)
         {
-            var U2 = _.U(2, T, 1);
-            var U2over3 = U2 / 3;
+            var U2 = (T - 3) / 2;
+            var U3 = U2 / 3;
 
-            var U2Sum = _.Sum1ToNExclusive(U2);
-            var overshot = 3 * (U2over3 * U2over3 + U2over3) / 2;
+            var u2Sum = (U2 * U2 + U2) / 2;
+            var u3Sum = 3 * (U3 * U3 + U3) / 2;
 
-            var r = T % 3;
-            var error = r * U2over3;
+            BigInteger offset = 0;
 
-            var res = U2Sum + error - overshot;
+            var result = u2Sum - u3Sum + offset;
 
-            // Why do I need to add this back on every 6th step up from T?
-            // My guess is some rounding error somewhere else is creeping in
-            // Need to further investigate, but for now it works.
-            var zz = (T - 3) / 6;
-            var rem = (T - 3) % 6;
-            if (rem == 0)
-            {
-                res += (3 * zz);
-            }
-
-            return res;
+            return result;
         }
 
         public static BigInteger StrictPartitionTriplets(BigInteger n)
@@ -218,18 +178,6 @@ namespace solver
         }
 
         /// <summary>
-        /// Calculates U_f.
-        /// </summary>
-        /// <param name="setSize"></param>
-        /// <param name="T"></param>
-        /// <param name="offset"></param>
-        /// <returns></returns>
-        public static long U(long setSize, long T, long offset)
-        {
-            return (long) MathF.Floor((T - Sum1ToNExclusive(setSize) - offset) / setSize);
-        }
-
-        /// <summary>
         /// BigInteger version of U.
         /// </summary>
         /// <param name="setSize"></param>
@@ -247,26 +195,6 @@ namespace solver
         /// <param name="n"></param>
         /// <returns></returns>
         public static BigInteger s1ne(BigInteger n)
-        {
-            return (n * n - n) / (BigInteger) 2;
-        }
-
-        /// <summary>
-        /// Calculates the sum of i from i = 1 to n.
-        /// </summary>
-        /// <param name="n"></param>
-        /// <returns></returns>
-        public static long Sum1ToN(long n)
-        {
-            return (n * n + n) / 2;
-        }
-
-        /// <summary>
-        /// Calculates the sum of i from i = 1 to n - 1.
-        /// </summary>
-        /// <param name="n"></param>
-        /// <returns></returns>
-        public static long Sum1ToNExclusive(long n)
         {
             return (n < 2) ? 0 : (n * n - n) / 2;
         }
