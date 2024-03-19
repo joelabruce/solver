@@ -13,25 +13,35 @@ namespace solver
         {
             const long desiredTaskCount = 4; // 3 to 4 segments seems to be the magic number for performance
 
-            long start = 6;// (long) Math.Pow(10, 10);
-            long end = 117;
+            long start = 1;// (long) Math.Pow(10, 10);
+            long tasks = 50;
             
+            Console.WriteLine("1) Test and time strict triplet implementations");
+            Console.WriteLine("2) Test Generating Quadruplets");
+            Console.WriteLine("3) Test Triplet patterns");
+            Console.WriteLine("4) Test Quadruplet patterns");
+            var testChoice = Console.ReadLine();
             var tms = Timed(() =>
             {
-                for (long task = start; task <= start + end; task++)
+                for (long task = start; task <= start + tasks; task++)
                 {
                     var T = task;
 
-                    var testChoice = 2;
                     switch (testChoice)
                     {
-                        case 1: // Generate strict triplets of T using dynamic-programming vs fast algorithm
+                        case "0":
+                            _.UniverseGenerator(T, (indices) =>
+                            {
+                                Console.WriteLine(string.Join(", ", indices));
+                            });
+                            break;
+                        case "1": // Generate strict triplets of T using dynamic-programming vs fast algorithm
                             var (ms, r) = TimedFunc(() => TripletsAsync(desiredTaskCount, T).Result);
                             var (msf, rf) = TimedFunc(() => _.StrictPartitionTriplets(T));
                             Console.WriteLine($"{r} in {ms}ms");
                             Console.WriteLine($"{rf} in {msf}ms (f)");
                             break;
-                        case 2: // Generate quadruplets using recursive algorithm, to try to find the next pattern
+                        case "2": // Generate quadruplets using recursive algorithm, to try to find the next pattern
                             BigInteger[] U = new BigInteger[5];
                             BigInteger[] i = new BigInteger[5];
                             var counts = _.RecursiveTupleBI(4, T, U, i, 0, (indices) =>
@@ -39,13 +49,19 @@ namespace solver
                                 Console.WriteLine($"{string.Join(", ", indices)}");
                             });
                             break;
+                        case "3":
+                            GenTriplets(T, true);
+                            break;
+                        case "4":
+                            GenQuadruplets(T, true);
+                            break;
                         default:
                             break;
                     }
                 }
             });
             
-            Console.WriteLine($"Total ms: {tms}, Avg: {tms / end}");
+            Console.WriteLine($"Total ms: {tms}, Avg: {tms / tasks}");
         }
 
         public static (long, T) TimedFunc<T>(Func<T> process)
@@ -135,57 +151,79 @@ namespace solver
             return count;
         }
 
-        public static BigInteger GenQuadruplets(BigInteger T, Action<BigInteger[]> processQuads)
+        public static BigInteger GenQuadruplets(BigInteger T, bool includeBreakdown = false)
         {
             BigInteger[] U = new BigInteger[4];
             BigInteger[] i = new BigInteger[4];
             BigInteger count = 0;
+            BigInteger tripsForQuads = 0;
+
+            if (includeBreakdown) Console.Write($"{T}, % {T % 24} ");
+            Console.WriteLine();
+            //Console.WriteLine(T);
 
             U[3] = _.U_(4, T, 0);
             for (i[0] = 1; i[0] <= U[3]; i[0]++)
             {
-                Console.WriteLine($"{i[0]},");
+                tripsForQuads = 0;
+                if (includeBreakdown) Console.Write($"{i[0]} -> ");
                 U[2] = _.U_(3, T, i[0]);
                 for (i[1] = i[0] + 1; i[1] <= U[2]; i[1]++)
                 {
-                    Console.WriteLine($"   {i[1]},");
                     U[1] = _.U_(2, T, i[0] + i[1]);
                     for (i[2] = i[1] + 1; i[2] <= U[1]; i[2]++)
                     {
                         U[0] = _.U_(1, T, i[0] + i[1] + i[2]);
-
                         i[3] = U[0];
-                        //processQuads.Invoke(i);
-                        Console.WriteLine($"      {string.Join(", ", i.Skip(2))}");
 
                         count++;
+                        tripsForQuads++;
                     }
                 }
+
+                if (includeBreakdown) Console.WriteLine(tripsForQuads);
             }
+
+            Console.WriteLine();
 
             return count;
         }
 
-        public static BigInteger GenTriplets(BigInteger T, Action<BigInteger[]> processQuads)
+        public static BigInteger GenTriplets(BigInteger T, bool includeBreakdown = false)
         {
             BigInteger[] U = new BigInteger[4];
             BigInteger[] i = new BigInteger[4];
             BigInteger count = 0;
+            BigInteger pairsForTriplets = 0;
 
+            if (includeBreakdown) Console.Write($"{T}, % {T % 3} ");
+
+            //if (T % 6 == 2)
+            {
+                Console.WriteLine($"{_.ExperimentalTotalTriplets(T)}");
+            }
+            
             U[2] = _.U_(3, T, 0);
             for (i[0] = 1; i[0] <= U[2]; i[0]++)
             {
-                Console.WriteLine($"{i[0]},");
+                pairsForTriplets = 0;
+                if (includeBreakdown) Console.Write($"{i[0]} -> ");
                 U[1] = _.U_(2, T, i[0]);
                 for (i[1] = i[0] + 1; i[1] <= U[1]; i[1]++)
                 {
                     U[0] = _.U_(1, T, i[0] + i[1]);                    
                     i[2] = U[0];
                     
-                    Console.WriteLine($"      {string.Join(", ", i.Skip(1))}");
                     count++;
+                    pairsForTriplets++;
+                    Console.WriteLine();
+                    Console.WriteLine(string.Join(", ", i));
                 }
+
+                if (includeBreakdown) Console.WriteLine(pairsForTriplets);
             }
+
+            if (includeBreakdown)  Console.WriteLine();
 
             return count;
         }

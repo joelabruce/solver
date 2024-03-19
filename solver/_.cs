@@ -134,21 +134,37 @@ namespace solver
             return count;
         }
 
+        /// <summary>
+        /// Exactly calculates distinct triplets based on recognizing pattern in how many pairs exist within triplets.
+        /// </summary>
+        /// <param name="T"></param>
+        /// <returns></returns>
         public static BigInteger ExperimentalTotalTriplets(BigInteger T)
         {
-            var U2 = (T - 3) / 2;
-            var U3 = U2 / 3;
+            // Further optimizations can be made, but not optimized to show weaving pattern
+            // Further research is to see if a similar pattern holds for quadruplets and other tuplets
+            var r = T % 3;
+            var n1 = (T / 6);
+            var n2 = (T - 2) / 6;
+            var n3 = (T - 4) / 6;
+            var s1 = (3 * n1 * n1 - n1) / 2;        // Same as sum of i from 1 to n1 (3i - 2)
+            var s2 = (3 * n2 * n2 + n2) / 2;        // Same as sum of i from 1 to n2 (3i - 1)
+            var s3 = (3 * n3 * n3 + 3 * n3) / 2;    // Same as sum of i from 1 to n3 (3i - 0)
 
-            var u2Sum = (U2 * U2 + U2) / 2;
-            var u3Sum = 3 * (U3 * U3 + U3) / 2;
+            BigInteger result = 0;
 
-            BigInteger offset = 0;
-
-            var result = u2Sum - u3Sum + offset;
-
+            // Determining which weaves to add can easily be seen by the pattern of pairs each triplet generates
+            if (r == 0) result = s1 + s2;     // Sum of weave 1 and 2
+            if (r == 1) result = s1 + s3;     // Sum of Weave 1 and 3
+            if (r == 2) result = s2 + s3;     // Sum of Weave 2 and 3
             return result;
         }
 
+        /// <summary>
+        /// While provides exact answers, less elegant to educe pattern that this logic is based on.
+        /// </summary>
+        /// <param name="n"></param>
+        /// <returns></returns>        
         public static BigInteger StrictPartitionTriplets(BigInteger n)
         {
             // Only works for particitions of n == 3
@@ -164,9 +180,7 @@ namespace solver
 
             var res = U2Sum + error - overshot;
 
-            // Why do I need to add this back on every 6th step up from T?
-            // My guess is some rounding error somewhere else is creeping in
-            // Need to further investigate, but for now it works.
+            // This is an optimization because it allows for only figuring out 2 periods and adding the 3rd period as an adjustment.
             var zz = (n - 3) / 6;
             var rem = (n - 3) % 6;
             if (rem == 0)
