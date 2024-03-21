@@ -7,6 +7,10 @@ using System.Threading.Tasks;
 
 namespace solver
 {
+    /// <summary>
+    /// Foundational Math Functions.
+    /// Shortened to _ to highlight these functions are so widespread and fundamental.
+    /// </summary>
     public class _
     {
         /// <summary>
@@ -43,7 +47,7 @@ namespace solver
         /// <returns></returns>
         public static Segment[] FrontLoadedThreadSegmentGenerator(long desiredThreadCount, long upperBound)
         {
-            var actualThreads = (desiredThreadCount < upperBound) ? desiredThreadCount : upperBound;
+            var actualThreads = (desiredThreadCount < upperBound) ? desiredThreadCount : (upperBound != 0) ? upperBound : 1;
             var segmentSize = upperBound / actualThreads;
             var remainder = upperBound % actualThreads;
             var remaining = remainder;
@@ -102,6 +106,16 @@ namespace solver
         }
 
         /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="n"></param>
+        /// <returns>The T to generate tuples from, which can be used to solve for partitions of given n.</returns>
+        public static BigInteger TforPartitionsOfN(BigInteger n)
+        {
+            return (n * n + 3 * n + 2) / 2 - 1; 
+        }
+
+        /// <summary>
         /// Generates all tuples that sum to T for a give tupleSize.
         /// </summary>
         /// <param name="tupleSize">How many elements to have in resulting tuples.</param>
@@ -132,6 +146,41 @@ namespace solver
             }
 
             return count;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="T"></param>
+        /// <returns></returns>
+        public static BigInteger ExperimentalQuadruplets(BigInteger T)
+        {
+            var r = T % 4;
+            var n1 = 123;
+            var n2 = 234;
+            var n3 = 345;
+            var n4 = 567;
+
+            var s1 = n1;
+            var s2 = n2;
+            var s3 = n3;
+            var s4 = n4;
+
+            BigInteger result = 0;
+
+            //2, 7, 14, 24, 37, 52, 70, 91, 114, 140, 169, 200, 234, 271, 310, ...
+            if (r == 0) result = s1 + s2;   //
+            
+            //3, 8, 16, 27, 40, 56, 75, 96, 120, 147, 176, 208, 243, 280, 320, ...
+            if (r == 1) result = s1 + s3;   //
+            
+            //1, 4, 10, 19, 30, 44, 61, 80, 102, 127, 154, 184, 217, 252, 290, ...
+            if (r == 2) result = s2 + s3;   //
+            
+            //1, 5, 12, 21, 33, 48, 65, 85, 108, 133, 161, 192, 225, 261, 300, ...
+            if (r == 3) result = s3 + s4;   //
+
+            return result;
         }
 
         /// <summary>
@@ -172,7 +221,7 @@ namespace solver
             var U2 = _.U_(2, n, 1);
             var U2over3 = U2 / 3;
 
-            var U2Sum = _.s1ne(U2);
+            var U2Sum = _.TriangularNumber(U2 - 1);
             var overshot = 3 * (U2over3 * U2over3 + U2over3) / 2;
 
             var r = n % 3;
@@ -192,7 +241,9 @@ namespace solver
         }
 
         /// <summary>
-        /// BigInteger version of U.
+        /// Calculates the upper bound of a set given the setSize and offset.
+        /// Since we are dealing with discreet math and BifIntegers, no need for the floor function,
+        /// (The values are automatically truncated.)
         /// </summary>
         /// <param name="setSize"></param>
         /// <param name="T"></param>
@@ -200,17 +251,29 @@ namespace solver
         /// <returns></returns>
         public static BigInteger U_(BigInteger setSize, BigInteger T, BigInteger offset)
         {
-            return (T - s1ne(setSize) - offset) / setSize;
+            return (T - TriangularNumber(setSize - 1) - offset) / setSize;
         }
 
         /// <summary>
-        /// BigInteger version of sum of i from 1 to n exclusive.
+        /// Caclulates the nth Triangular Number.
+        /// Always guaranteed to be a whole number for n >= 0
         /// </summary>
         /// <param name="n"></param>
         /// <returns></returns>
-        public static BigInteger s1ne(BigInteger n)
+        public static BigInteger TriangularNumber(BigInteger n)
         {
-            return (n < 2) ? 0 : (n * n - n) / 2;
+            return (n * n + n) / 2;
+        }
+
+        /// <summary>
+        /// Calculates the nth Pentagonal Number.
+        /// Always guaranteed to be a whole number for n >= 0
+        /// </summary>
+        /// <param name="n"></param>
+        /// <returns></returns>
+        public static BigInteger PentagonalNumber(BigInteger n)
+        {
+            return (3 * n * n - n) / 2;
         }
     }
 }
