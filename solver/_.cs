@@ -125,7 +125,14 @@ namespace solver
         /// <param name="lowerbound">Accumulated lower bounds.</param>
         /// <param name="tuplesolutionProcessor">Action to take on solution tuple.</param>
         /// <returns></returns>
-        public static BigInteger RecursiveTupleBI(long tupleSize, BigInteger T, BigInteger[] U, BigInteger[] i, BigInteger lowerbound, Action<BigInteger[]> tupleProc)
+        public static BigInteger RecursiveTupleBI(
+            long tupleSize, 
+            BigInteger T, 
+            BigInteger[] U, 
+            BigInteger[] i, 
+            BigInteger lowerbound, 
+            Action<BigInteger[]> tupleProc
+        )
         {
             var nextLayer = tupleSize - 1;
             U[nextLayer] = _.U_(tupleSize, T, lowerbound);
@@ -153,34 +160,40 @@ namespace solver
         /// </summary>
         /// <param name="T"></param>
         /// <returns></returns>
-        public static BigInteger ExperimentalQuadruplets(BigInteger T)
+        public static BigInteger PhasedHexagonalQuadruplets(BigInteger T)
         {
+            var a = (T - 6) / 4;
             var r = T % 4;
-            var n1 = 123;
-            var n2 = 234;
-            var n3 = 345;
-            var n4 = 567;
-
-            var s1 = n1;
-            var s2 = n2;
-            var s3 = n3;
-            var s4 = n4;
+            var offset = (T + 2) % 4;
 
             BigInteger result = 0;
+            //for (BigInteger n = T - 4; n >= 6; n -= 4)    // This was the pattern discovered.
+            for (BigInteger n = 0; n < a; n++)              // Another way of writing the nth term of phased pentagonal
+            {
+                result += PhasedPentagonalTriplets(n * 4 + 6 + offset);
+            }
 
-            //2, 7, 14, 24, 37, 52, 70, 91, 114, 140, 169, 200, 234, 271, 310, ...
-            if (r == 0) result = s1 + s2;   //
-            
-            //3, 8, 16, 27, 40, 56, 75, 96, 120, 147, 176, 208, 243, 280, 320, ...
-            if (r == 1) result = s1 + s3;   //
-            
-            //1, 4, 10, 19, 30, 44, 61, 80, 102, 127, 154, 184, 217, 252, 290, ...
-            if (r == 2) result = s2 + s3;   //
-            
-            //1, 5, 12, 21, 33, 48, 65, 85, 108, 133, 161, 192, 225, 261, 300, ...
-            if (r == 3) result = s3 + s4;   //
+            // Predictions based on preliminary results
+            //n mod 4 = 0: 0, 0, 2, 7, 14, 24, 37, 52, 70, 91, 114, 140, 169, 200, 234, 271, 310, ...
+            //n mod 4 = 1: 0, 0, 0, 3, 8, 16, 27, 40, 56, 75, 96, 120, 147, 176, 208, 243, 280, 320, ...
+            //n mod 4 = 2: 0, 0, 1, 4, 10, 19, 30, 44, 61, 80, 102, 127, 154, 184, 217, 252, 290, ...
+            //n mod 4 = 3: 0, 0, 1, 5, 12, 21, 33, 48, 65, 85, 108, 133, 161, 192, 225, 261, 300, ...
+            //if (r == 0) result = k * k + 2 * k - 1;           //
+            //if (r == 1) result = 3 * k * k / 2 + k / 2 + 1;   //
+            //if (r == 2) result = 3 * (k * k - k) / 2 ;        //
+            //if (r == 3) result = 3 * (k * k) - k / 2;   //
 
             return result;
+        }
+
+        public static BigInteger SimpleTriplets(BigInteger T)
+        {
+            var a = (T - 4) / 2;
+            var r = T % 3;
+            //var offset = 
+
+            BigInteger result = TriangularNumber(a);
+            //var offset = (T + 1) % 3;
         }
 
         /// <summary>
@@ -188,24 +201,36 @@ namespace solver
         /// </summary>
         /// <param name="T"></param>
         /// <returns></returns>
-        public static BigInteger ExperimentalTotalTriplets(BigInteger T)
+        public static BigInteger PhasedPentagonalTriplets(BigInteger T, bool capLowerLimit = true)
         {
+            if (T < 6 && capLowerLimit) return 0;
+
             // Further optimizations can be made, but not optimized to show weaving pattern
             // Further research is to see if a similar pattern holds for quadruplets and other tuplets
             var r = T % 3;
+
             var n1 = (T / 6);
             var n2 = (T - 2) / 6;
             var n3 = (T - 4) / 6;
-            var s1 = (3 * n1 * n1 - n1) / 2;        // Same as sum of i from 1 to n1 (3i - 2)
-            var s2 = (3 * n2 * n2 + n2) / 2;        // Same as sum of i from 1 to n2 (3i - 1)
-            var s3 = (3 * n3 * n3 + 3 * n3) / 2;    // Same as sum of i from 1 to n3 (3i - 0)
+            var s1 = (3 * n1 * n1 - n1) / 2;        // Same as sum of i from 1 to n1 (3i - 2): 1, 4, 7, 10, 13, 16, 19, 22...
+            var s2 = (3 * n2 * n2 + n2) / 2;        // Same as sum of i from 1 to n2 (3i - 1): 2, 5, 8, 11, 14, 17, 20, 23...
+            var s3 = (3 * n3 * n3 + 3 * n3) / 2;    // Same as sum of i from 1 to n3 (3i - 0): 3, 6, 9, 12, 15, 18, 21, 24...
 
             BigInteger result = 0;
 
             // Determining which weaves to add can easily be seen by the pattern of pairs each triplet generates
+            // 1, 2, 4, 5, 7, 8, 10, 11, ...
             if (r == 0) result = s1 + s2;     // Sum of weave 1 and 2
+            
+            // 1, 3, 4, 6, 7, 9, 10, 12, ...
             if (r == 1) result = s1 + s3;     // Sum of Weave 1 and 3
+
+            // 2, 3, 5, 6, 8, 9, 11, 12, ...
             if (r == 2) result = s2 + s3;     // Sum of Weave 2 and 3
+
+            // Another way of thinking about this, is that we take the triangular number, and subtract the gaps that are formed in the pattern.
+            // The gaps are what make this a fractal.
+            // This effectively makes the series of triangular numbers the upper bounds.
             return result;
         }
 
@@ -274,6 +299,27 @@ namespace solver
         public static BigInteger PentagonalNumber(BigInteger n)
         {
             return (3 * n * n - n) / 2;
+        }
+
+        /// <summary>
+        /// Calculates the nth Hexagonal Number.
+        /// </summary>
+        /// <param name="n"></param>
+        /// <returns></returns>
+        public static BigInteger HexagonalNumber(BigInteger n)
+        {
+            return 2 * n * n - n;
+        }
+
+        /// <summary>
+        /// Calculates the nth Polygonal Number of a polygon with s sides.
+        /// </summary>
+        /// <param name="s"></param>
+        /// <param name="n"></param>
+        /// <returns></returns>
+        public static BigInteger PolygonalNumber(BigInteger s, BigInteger n)
+        {
+            return (s - 2) * (n * n - n) / 2 + n; 
         }
     }
 }

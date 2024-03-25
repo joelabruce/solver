@@ -13,32 +13,36 @@ namespace solver
         {
             const long desiredTaskCount = 4; // 3 to 4 segments seems to be the magic number for performance
 
-            long start = 1;// (long) Math.Pow(10, 10);
-            long tasks = 50;
-            
+            //long start = 1;// (long) Math.Pow(10, 10);
+            //long tasks = 50;
+
+            Console.WriteLine("0) Generate Universe of solutions");
             Console.WriteLine("1) Test and time strict triplet implementations");
             Console.WriteLine("2) Test Generating Quadruplets");
             Console.WriteLine("3) Test Triplet patterns");
             Console.WriteLine("4) Test Quadruplet patterns");
-            var testChoice = Console.ReadLine();
+            Console.WriteLine("5) Test Quintuplet patterns");
+            var testChoice = Console.ReadLine() + ",8,20";
+
+            var (choice, start, tasks) = testChoice.Split(",");
             var tms = Timed(() =>
             {
                 for (long task = start; task <= start + tasks; task++)
                 {
                     var T = task;
 
-                    switch (testChoice)
+                    switch (choice)
                     {
-                        case "0":
+                        case 0:
                             _.UniverseGenerator(T, (indices) =>
                             {
                                 Console.WriteLine(string.Join(", ", indices));
                             });
                             break;
-                        case "1": // Generate strict triplets of T using dynamic-programming vs fast algorithm
+                        case 1: // Generate strict triplets of T using dynamic-programming vs fast algorithm
                             var (ms, r) = TimedFunc(() => TripletsAsync(desiredTaskCount, T).Result);
                             var (msf, rf) = TimedFunc(() => _.StrictPartitionTriplets(T));
-                            var (msf2, rf2) = TimedFunc(() => _.ExperimentalTotalTriplets(T));
+                            var (msf2, rf2) = TimedFunc(() => _.PhasedPentagonalTriplets(T));
                             //Console.WriteLine($"{r} in {ms}ms");
                             //Console.WriteLine($"{rf} in {msf}ms (f)");
                             //Console.WriteLine($"{rf2} in {msf2}ms (f2)");
@@ -46,7 +50,7 @@ namespace solver
                             if (r != rf2 || r != rf2)
                                 Console.WriteLine("Exception found!");
                             break;
-                        case "2": // Generate quadruplets using recursive algorithm, to try to find the next pattern
+                        case 2: // Generate quadruplets using recursive algorithm, to try to find the next pattern
                             BigInteger[] U = new BigInteger[5];
                             BigInteger[] i = new BigInteger[5];
                             var counts = _.RecursiveTupleBI(4, T, U, i, 0, (indices) =>
@@ -54,13 +58,13 @@ namespace solver
                                 Console.WriteLine($"{string.Join(", ", indices)}");
                             });
                             break;
-                        case "3":
-                            GenTriplets(T, true);
+                        case 3:
+                            Console.WriteLine(GenTriplets(T, true));
                             break;
-                        case "4":
+                        case 4:
                             Console.WriteLine(GenQuadruplets(T, true));
                             break;
-                        case "5":
+                        case 5:
                             Console.WriteLine(GenQuintuplets(T, true));
                             break;
                         default:
@@ -174,7 +178,10 @@ namespace solver
             for (i[0] = 1; i[0] <= U[4]; i[0]++)
             {
                 quadsForQuints = 0;
-                if (includeBreakdown) Console.Write($"{i[0]} -> ");
+
+                BigInteger guess = _.PhasedPentagonalTriplets(T -i[0]);
+
+                if (includeBreakdown) Console.Write($"{i[0]} -> ({guess}) ");
                 U[3] = _.U_(4, T, i[0]);
                 for (i[1] = i[0] + 1; i[1] <= U[3]; i[1]++)
                 {
@@ -205,34 +212,41 @@ namespace solver
             BigInteger[] i = new BigInteger[4];
             BigInteger count = 0;
             BigInteger tripsForQuads = 0;
+            BigInteger pairsForTrips = 0;
 
             Console.WriteLine();
             if (includeBreakdown) Console.Write($"{T}, % {T % 4} ");
-            Console.WriteLine();
+            Console.WriteLine($"({_.PhasedHexagonalQuadruplets(T)})");
 
             U[3] = _.U_(4, T, 0);
             for (i[0] = 1; i[0] <= U[3]; i[0]++)
             {
                 tripsForQuads = 0;
-                if (includeBreakdown) Console.Write($"{i[0]} -> ");
+                //if (includeBreakdown) Console.Write($"{i[0]} -> ");
+                //if (includeBreakdown) Console.WriteLine();
+
+
                 U[2] = _.U_(3, T, i[0]);
                 for (i[1] = i[0] + 1; i[1] <= U[2]; i[1]++)
                 {
+                    pairsForTrips = 0;
                     U[1] = _.U_(2, T, i[0] + i[1]);
                     for (i[2] = i[1] + 1; i[2] <= U[1]; i[2]++)
                     {
                         U[0] = _.U_(1, T, i[0] + i[1] + i[2]);
                         i[3] = U[0];
 
+                        //Console.WriteLine($"   {string.Join(", ", i.Skip(1))}");
+
                         count++;
                         tripsForQuads++;
+                        pairsForTrips++;
                     }
+                    //Console.WriteLine($"     {pairsForTrips}");
                 }
 
-                if (includeBreakdown) Console.WriteLine(tripsForQuads);
+                //if (includeBreakdown) Console.WriteLine(tripsForQuads);
             }
-
-            //Console.WriteLine();
 
             return count;
         }
@@ -248,9 +262,9 @@ namespace solver
 
             //if (T % 6 == 2)
             {
-                Console.WriteLine($"{_.ExperimentalTotalTriplets(T)}");
+                Console.WriteLine($"({_.PhasedPentagonalTriplets(T)})");
             }
-            
+
             U[2] = _.U_(3, T, 0);
             for (i[0] = 1; i[0] <= U[2]; i[0]++)
             {
@@ -270,9 +284,17 @@ namespace solver
                 if (includeBreakdown) Console.WriteLine($"   {pairsForTriplets}");
             }
 
-            if (includeBreakdown)  Console.WriteLine();
-
             return count;
         }
+    }
+}
+
+public static class Extensions
+{
+    public static void Deconstruct(this string[] prompts, out int choice, out long start, out long quantity)
+    {
+        int.TryParse(prompts[0], out choice);
+        long.TryParse(prompts[1], out start);
+        long.TryParse(prompts[2], out quantity);
     }
 }
