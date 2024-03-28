@@ -116,7 +116,7 @@ namespace solver
         }
 
         /// <summary>
-        /// Generates all tuples that sum to T for a give tupleSize.
+        /// Generates all tuples that sum to T for a given tupleSize.
         /// </summary>
         /// <param name="tupleSize">How many elements to have in resulting tuples.</param>
         /// <param name="T">Target sum.</param>
@@ -194,6 +194,7 @@ namespace solver
 
             BigInteger result = TriangularNumber(a);
             //var offset = (T + 1) % 3;
+            return 0;
         }
 
         /// <summary>
@@ -267,7 +268,7 @@ namespace solver
 
         /// <summary>
         /// Calculates the upper bound of a set given the setSize and offset.
-        /// Since we are dealing with discreet math and BifIntegers, no need for the floor function,
+        /// Since we are dealing with discreet math and BigIntegers, no need for the floor function,
         /// (The values are automatically truncated.)
         /// </summary>
         /// <param name="setSize"></param>
