@@ -14,7 +14,7 @@ namespace solver
     public class _
     {
         /// <summary>
-        /// 
+        /// Generates all subsets that sum to T.
         /// </summary>
         /// <param name="T"></param>
         /// <param name="tupleSolutionProcessor"></param>
@@ -186,15 +186,38 @@ namespace solver
             return result;
         }
 
+        /// <summary>
+        /// Calculates the strict partitions for triplets of T in linear time.
+        /// Purposely left unoptimized to show math.
+        /// </summary>
+        /// <param name="T"></param>
+        /// <returns></returns>
         public static BigInteger SimpleTriplets(BigInteger T)
         {
-            var a = (T - 4) / 2;
+            var UB = TriangularNumber((T - 4) / 2);     // Upper bounds of T triplets, from which we subtract.
             var r = T % 3;
-            //var offset = 
+            BigInteger n;
+            BigInteger offset;
 
-            BigInteger result = TriangularNumber(a);
-            //var offset = (T + 1) % 3;
-            return 0;
+            // Order of operations is important because of implicit floor operations for BigInteger divisions.
+            if (r == 0)
+            {
+                n = ((T - 4) / 6);
+                offset = ((n * n + n) / 2) * 3;
+            }
+            else if (r == 1)
+            { 
+                n = ((T - 2) / 6);
+                offset = ((3 * n * n + n) / 2);
+            }
+            else 
+            {
+                n = (T / 6);
+                offset = ((3 * n * n - n) / 2);
+            }
+
+            BigInteger result = UB - offset;
+            return result;
         }
 
         /// <summary>

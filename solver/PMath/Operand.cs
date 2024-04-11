@@ -101,7 +101,7 @@ namespace solver.PMath
     public static class OperandExtensions
     {
         /// <summary>
-        /// Wrap in Operand.
+        /// Wrap in Operand, or aka the Label operator.
         /// </summary>
         /// <param name="value"></param>
         /// <param name="label"></param>

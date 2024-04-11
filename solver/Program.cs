@@ -22,7 +22,7 @@ namespace solver
             Console.WriteLine("3) Test Triplet patterns");
             Console.WriteLine("4) Test Quadruplet patterns");
             Console.WriteLine("5) Test Quintuplet patterns");
-            var testChoice = Console.ReadLine() + ",8,20";
+            var testChoice = Console.ReadLine() + ",1,20";
 
             var (choice, start, tasks) = testChoice.Split(",");
             var tms = Timed(() =>
@@ -43,12 +43,17 @@ namespace solver
                             var (ms, r) = TimedFunc(() => TripletsAsync(desiredTaskCount, T).Result);
                             var (msf, rf) = TimedFunc(() => _.StrictPartitionTriplets(T));
                             var (msf2, rf2) = TimedFunc(() => _.PhasedPentagonalTriplets(T));
+                            var (msf3, rf3) = TimedFunc(() => _.SimpleTriplets(T));
+                            //Console.WriteLine(T);
                             //Console.WriteLine($"{r} in {ms}ms");
                             //Console.WriteLine($"{rf} in {msf}ms (f)");
                             //Console.WriteLine($"{rf2} in {msf2}ms (f2)");
+                            //Console.WriteLine($"{rf3} in {msf3}ms (f3)");
 
-                            if (r != rf2 || r != rf2)
+                            if (r != rf2 || r != rf2 || r != rf3)
                                 Console.WriteLine("Exception found!");
+
+                            //Console.WriteLine();
                             break;
                         case 2: // Generate quadruplets using recursive algorithm, to try to find the next pattern
                             BigInteger[] U = new BigInteger[5];
@@ -222,8 +227,8 @@ namespace solver
             for (i[0] = 1; i[0] <= U[3]; i[0]++)
             {
                 tripsForQuads = 0;
-                //if (includeBreakdown) Console.Write($"{i[0]} -> ");
-                //if (includeBreakdown) Console.WriteLine();
+                if (includeBreakdown) Console.Write($"{i[0]} -> ");
+                if (includeBreakdown) Console.WriteLine();
 
 
                 U[2] = _.U_(3, T, i[0]);
@@ -236,16 +241,16 @@ namespace solver
                         U[0] = _.U_(1, T, i[0] + i[1] + i[2]);
                         i[3] = U[0];
 
-                        //Console.WriteLine($"   {string.Join(", ", i.Skip(1))}");
+                        Console.WriteLine($"   {string.Join(", ", i.Skip(1))}");
 
                         count++;
                         tripsForQuads++;
                         pairsForTrips++;
                     }
-                    //Console.WriteLine($"     {pairsForTrips}");
+                    Console.WriteLine($"     {pairsForTrips}");
                 }
 
-                //if (includeBreakdown) Console.WriteLine(tripsForQuads);
+                if (includeBreakdown) Console.WriteLine(tripsForQuads);
             }
 
             return count;
