@@ -11,7 +11,7 @@ namespace solver
     /// Foundational Math Functions.
     /// Shortened to _ to highlight these functions are so widespread and fundamental.
     /// </summary>
-    public class _
+    public static class _
     {
         /// <summary>
         /// Generates all subsets that sum to T.
@@ -155,6 +155,26 @@ namespace solver
             return count;
         }
 
+        public static BigInteger TestQuadrupletsSolver(BigInteger T)
+        {
+            var n = (T - 6) / 4;
+            var inner = (T + 2) / 4; 
+            
+            
+            //BigInteger result = n * SimpleTriplets(-4 * inner + 44 * n;
+
+            return 0;
+        }
+
+        // Predictions based on preliminary results
+        //n mod 4 = 0: 0, 0, 2, 7, 14, 24, 37, 52, 70, 91, 114, 140, 169, 200, 234, 271, 310, ...
+        //n mod 4 = 1: 0, 0, 0, 3, 8, 16, 27, 40, 56, 75, 96, 120, 147, 176, 208, 243, 280, 320, ...
+        //n mod 4 = 2: 0, 0, 1, 4, 10, 19, 30, 44, 61, 80, 102, 127, 154, 184, 217, 252, 290, ...
+        //n mod 4 = 3: 0, 0, 1, 5, 12, 21, 33, 48, 65, 85, 108, 133, 161, 192, 225, 261, 300, ...
+        //if (r == 0) result = k * k + 2 * k - 1;           //
+        //if (r == 1) result = 3 * k * k / 2 + k / 2 + 1;   //
+        //if (r == 2) result = 3 * (k * k - k) / 2 ;        //
+        //if (r == 3) result = 3 * (k * k) - k / 2;   //
         /// <summary>
         /// 
         /// </summary>
@@ -162,26 +182,15 @@ namespace solver
         /// <returns></returns>
         public static BigInteger PhasedHexagonalQuadruplets(BigInteger T)
         {
-            var a = (T - 6) / 4;
-            var r = T % 4;
+            var n = (T - 6) / 4;
             var offset = (T + 2) % 4;
 
             BigInteger result = 0;
             //for (BigInteger n = T - 4; n >= 6; n -= 4)    // This was the pattern discovered.
-            for (BigInteger n = 0; n < a; n++)              // Another way of writing the nth term of phased pentagonal
+            for (BigInteger i = 1; i <= n; i++)              // Another way of writing the nth term of phased pentagonal
             {
-                result += PhasedPentagonalTriplets(n * 4 + 6 + offset);
+                result += SimpleTriplets((i - 1) * 4 + 6 + offset);
             }
-
-            // Predictions based on preliminary results
-            //n mod 4 = 0: 0, 0, 2, 7, 14, 24, 37, 52, 70, 91, 114, 140, 169, 200, 234, 271, 310, ...
-            //n mod 4 = 1: 0, 0, 0, 3, 8, 16, 27, 40, 56, 75, 96, 120, 147, 176, 208, 243, 280, 320, ...
-            //n mod 4 = 2: 0, 0, 1, 4, 10, 19, 30, 44, 61, 80, 102, 127, 154, 184, 217, 252, 290, ...
-            //n mod 4 = 3: 0, 0, 1, 5, 12, 21, 33, 48, 65, 85, 108, 133, 161, 192, 225, 261, 300, ...
-            //if (r == 0) result = k * k + 2 * k - 1;           //
-            //if (r == 1) result = 3 * k * k / 2 + k / 2 + 1;   //
-            //if (r == 2) result = 3 * (k * k - k) / 2 ;        //
-            //if (r == 3) result = 3 * (k * k) - k / 2;   //
 
             return result;
         }
@@ -194,30 +203,43 @@ namespace solver
         /// <returns></returns>
         public static BigInteger SimpleTriplets(BigInteger T)
         {
-            var UB = TriangularNumber((T - 4) / 2);     // Upper bounds of T triplets, from which we subtract.
-            var r = T % 3;
-            BigInteger n;
+            var x = new BigInteger(Math.Floor(((double)(T - 4)) / 2));
+            var UB = TriangularNumber(x);     // Upper bounds of T triplets, from which we subtract.
+            
+            BigInteger result = UB - JoelSeries(T);
+            return result;
+        }
+
+        /// <summary>
+        /// Used to subtract from
+        /// </summary>
+        /// <param name="T"></param>
+        /// <returns></returns>
+        public static BigInteger JoelSeries(BigInteger T)
+        {
+            if (T == 1) return 1;
+
+            // C#'s built in % operator is a remainder operator, not a true modulo operator.
+            // So to make the math consistent we implemented an extension method for BigInteger.
+            var r = (2-T).Mod(3);
+            BigInteger n = ((T - 2 * r)) / 6;
             BigInteger offset;
 
             // Order of operations is important because of implicit floor operations for BigInteger divisions.
             if (r == 0)
             {
-                n = ((T - 4) / 6);
-                offset = ((n * n + n) / 2) * 3;
-            }
-            else if (r == 1)
-            { 
-                n = ((T - 2) / 6);
-                offset = ((3 * n * n + n) / 2);
-            }
-            else 
-            {
-                n = (T / 6);
                 offset = ((3 * n * n - n) / 2);
             }
+            else if (r == 1)
+            {
+                offset = ((3 * n * n + n) / 2);
+            }
+            else // if (r == 2)
+            {
+                offset = ((n * n + n) / 2) * 3;
+            }
 
-            BigInteger result = UB - offset;
-            return result;
+            return offset;
         }
 
         /// <summary>
@@ -344,6 +366,18 @@ namespace solver
         public static BigInteger PolygonalNumber(BigInteger s, BigInteger n)
         {
             return (s - 2) * (n * n - n) / 2 + n; 
+        }
+
+        /// <summary>
+        /// Mathematically correct modulo that accounts for negative numbers correctly.
+        /// </summary>
+        /// <param name="self"></param>
+        /// <param name="other"></param>
+        /// <returns></returns>
+        public static BigInteger Mod(this BigInteger self, BigInteger other)
+        {
+            var r = self % other;
+            return r < 0 ? r + other : r;
         }
     }
 }

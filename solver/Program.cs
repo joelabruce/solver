@@ -22,6 +22,7 @@ namespace solver
             Console.WriteLine("3) Test Triplet patterns");
             Console.WriteLine("4) Test Quadruplet patterns");
             Console.WriteLine("5) Test Quintuplet patterns");
+            Console.WriteLine("6) Joel Series");
             var testChoice = Console.ReadLine() + ",1,20";
 
             var (choice, start, tasks) = testChoice.Split(",");
@@ -44,16 +45,16 @@ namespace solver
                             var (msf, rf) = TimedFunc(() => _.StrictPartitionTriplets(T));
                             var (msf2, rf2) = TimedFunc(() => _.PhasedPentagonalTriplets(T));
                             var (msf3, rf3) = TimedFunc(() => _.SimpleTriplets(T));
-                            //Console.WriteLine(T);
+                            Console.WriteLine(T);
                             //Console.WriteLine($"{r} in {ms}ms");
-                            //Console.WriteLine($"{rf} in {msf}ms (f)");
+                            Console.WriteLine($"{rf} in {msf}ms (f)");
                             //Console.WriteLine($"{rf2} in {msf2}ms (f2)");
-                            //Console.WriteLine($"{rf3} in {msf3}ms (f3)");
+                            Console.WriteLine($"{rf3} in {msf3}ms (f3)");
 
                             if (r != rf2 || r != rf2 || r != rf3)
-                                Console.WriteLine("Exception found!");
+                                Console.WriteLine($"Exception found! {T}");
 
-                            //Console.WriteLine();
+                            Console.WriteLine();
                             break;
                         case 2: // Generate quadruplets using recursive algorithm, to try to find the next pattern
                             BigInteger[] U = new BigInteger[5];
@@ -72,12 +73,17 @@ namespace solver
                         case 5:
                             Console.WriteLine(GenQuintuplets(T, true));
                             break;
+                        case 6:
+                            //Console.Write($"{_.JoelSeries(T)}, ");
+                            Console.WriteLine($"{_.JoelSeries(T)}");
+                            break;
                         default:
                             break;
                     }
                 }
             });
-            
+
+            Console.WriteLine();
             Console.WriteLine($"Total ms: {tms}, Avg: {tms / tasks}");
         }
 
@@ -221,7 +227,7 @@ namespace solver
 
             Console.WriteLine();
             if (includeBreakdown) Console.Write($"{T}, % {T % 4} ");
-            Console.WriteLine($"({_.PhasedHexagonalQuadruplets(T)})");
+            Console.WriteLine($"({_.PhasedHexagonalQuadruplets(T)}) [{_.TestQuadrupletsSolver(T)}]");
 
             U[3] = _.U_(4, T, 0);
             for (i[0] = 1; i[0] <= U[3]; i[0]++)
