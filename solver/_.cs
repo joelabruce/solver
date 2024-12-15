@@ -1,8 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace solver
@@ -22,7 +21,7 @@ namespace solver
         /// <returns></returns>
         public static BigInteger UniverseGenerator(BigInteger T, Action<BigInteger[]> tupleSolutionProcessor = null, Action<BigInteger, BigInteger> tuplesOfDProcessor = null)
         {
-            long n = (long) Math.Floor(nFromT(T));
+            long n = (long)Math.Floor(nFromT(T));
             BigInteger[] U = new BigInteger[n];
             BigInteger[] i = new BigInteger[n + 1];
             BigInteger count = 0;
@@ -101,7 +100,7 @@ namespace solver
         /// <returns></returns>
         public static double nFromT(BigInteger T)
         {
-            var f = (double) (2 * T) + .25;
+            var f = (double)(2 * T) + .25;
             return Math.Sqrt(f) - .5;
         }
 
@@ -112,7 +111,7 @@ namespace solver
         /// <returns>The T to generate tuples from, which can be used to solve for partitions of given n.</returns>
         public static BigInteger TforPartitionsOfN(BigInteger n)
         {
-            return (n * n + 3 * n + 2) / 2 - 1; 
+            return (n * n + 3 * n + 2) / 2 - 1;
         }
 
         /// <summary>
@@ -126,11 +125,11 @@ namespace solver
         /// <param name="tuplesolutionProcessor">Action to take on solution tuple.</param>
         /// <returns></returns>
         public static BigInteger RecursiveTupleBI(
-            long tupleSize, 
-            BigInteger T, 
-            BigInteger[] U, 
-            BigInteger[] i, 
-            BigInteger lowerbound, 
+            long tupleSize,
+            BigInteger T,
+            BigInteger[] U,
+            BigInteger[] i,
+            BigInteger lowerbound,
             Action<BigInteger[]> tupleProc
         )
         {
@@ -158,19 +157,19 @@ namespace solver
         public static BigInteger TestQuadrupletsSolver(BigInteger T)
         {
             var n = (T - 6) / 4;
-            var inner = (T + 2) / 4; 
-            
-            
+            var inner = (T + 2) / 4;
+
+
             //BigInteger result = n * SimpleTriplets(-4 * inner + 44 * n;
 
             return 0;
         }
 
         // Predictions based on preliminary results
-        //n mod 4 = 0: 0, 0, 2, 7, 14, 24, 37, 52, 70, 91, 114, 140, 169, 200, 234, 271, 310, ...
-        //n mod 4 = 1: 0, 0, 0, 3, 8, 16, 27, 40, 56, 75, 96, 120, 147, 176, 208, 243, 280, 320, ...
-        //n mod 4 = 2: 0, 0, 1, 4, 10, 19, 30, 44, 61, 80, 102, 127, 154, 184, 217, 252, 290, ...
-        //n mod 4 = 3: 0, 0, 1, 5, 12, 21, 33, 48, 65, 85, 108, 133, 161, 192, 225, 261, 300, ...
+        //n mod 4 = 1:   0,   0,   0,   3,   8,  16,  27,  40,  56,  75,  96, 120, 147, 176, 208, 243, 280, 320, ...
+        //n mod 4 = 2:   0,   0,   1,   4,  10,  19,  30,  44,  61,  80, 102, 127, 154, 184, 217, 252, 290, ...
+        //n mod 4 = 3:   0,   0,   1,   5,  12,  21,  33,  48,  65,  85, 108, 133, 161, 192, 225, 261, 300, ...
+        //n mod 4 = 0:   0,   0,   2,   7,  14,  24,  37,  52,  70,  91, 114, 140, 169, 200, 234, 271, 310, ...
         //if (r == 0) result = k * k + 2 * k - 1;           //
         //if (r == 1) result = 3 * k * k / 2 + k / 2 + 1;   //
         //if (r == 2) result = 3 * (k * k - k) / 2 ;        //
@@ -203,15 +202,17 @@ namespace solver
         /// <returns></returns>
         public static BigInteger SimpleTriplets(BigInteger T)
         {
+            // Need to use Math.Floor to correctly floor when values become negative.
             var x = new BigInteger(Math.Floor(((double)(T - 4)) / 2));
             var UB = TriangularNumber(x);     // Upper bounds of T triplets, from which we subtract.
-            
+
             BigInteger result = UB - JoelSeries(T);
             return result;
         }
 
         /// <summary>
-        /// Used to subtract from
+        /// A series of numbers to be used to subtract from certain Triangular numbers to get exact distinct triplets.
+        /// Generates a molien series.
         /// </summary>
         /// <param name="T"></param>
         /// <returns></returns>
@@ -221,23 +222,20 @@ namespace solver
 
             // C#'s built in % operator is a remainder operator, not a true modulo operator.
             // So to make the math consistent we implemented an extension method for BigInteger.
-            var r = (2-T).Mod(3);
+            var r = (int)(2 - T).Mod(3);
             BigInteger n = ((T - 2 * r)) / 6;
-            BigInteger offset;
-
             // Order of operations is important because of implicit floor operations for BigInteger divisions.
-            if (r == 0)
+            BigInteger offset = r switch
             {
-                offset = ((3 * n * n - n) / 2);
-            }
-            else if (r == 1)
-            {
-                offset = ((3 * n * n + n) / 2);
-            }
-            else // if (r == 2)
-            {
-                offset = ((n * n + n) / 2) * 3;
-            }
+                0 => (3 * n * n - n) / 2,
+                1 => (3 * n * n + n) / 2,
+                _ => 3 * ((n * n + n) / 2)
+            };
+
+            var n2 = n + r;
+            var offset2 = (3 * n2 * n2 - n2) / 2;
+
+            Console.WriteLine(offset2 == offset);
 
             return offset;
         }
@@ -267,7 +265,7 @@ namespace solver
             // Determining which weaves to add can easily be seen by the pattern of pairs each triplet generates
             // 1, 2, 4, 5, 7, 8, 10, 11, ...
             if (r == 0) result = s1 + s2;     // Sum of weave 1 and 2
-            
+
             // 1, 3, 4, 6, 7, 9, 10, 12, ...
             if (r == 1) result = s1 + s3;     // Sum of Weave 1 and 3
 
@@ -309,6 +307,52 @@ namespace solver
             }
 
             return res;
+        }
+
+        public static BigInteger StrictPartitionTripletsSub(BigInteger T)
+        {
+            var a = (T - 4) / 2; // new BigInteger(Math.Floor(((double)(T - 4)) / 2));
+            var m = (2 - T).Mod(3);
+            var j = 2 * m;
+            var c = j - 1;
+            var b = (T - j) / 6; // new BigInteger(Math.Floor(((double)(T - j)) / 6));
+
+            var t = (a * a + a) / 2;
+            var o = 3 * (b * b) / 2 + (c * b) / 2;
+
+            var s = t - o;
+            Console.WriteLine($"T{t} m{m} j{j} c{c} b{b} o{o}");
+            return s;
+        }
+
+        /// <summary>
+        /// Provides correct answer by summing up the two streams / rings.
+        /// </summary>
+        /// <param name="T"></param>
+        /// <returns></returns>
+        public static BigInteger StrictPartitionTripletsAdd(BigInteger T)
+        {
+            BigInteger m1 = (1 - T).Mod(3);
+            BigInteger m2 = (0 - T).Mod(3);
+            BigInteger j1 = 2 * m1;
+            BigInteger j2 = 2 * m2;
+
+            // Floor operation vital to ensure rounding correctly when negative values are involved.
+            BigInteger b1 = new BigInteger(Math.Floor((double)(T - j1) / 6));
+            BigInteger b2 = new BigInteger(Math.Floor((double)(T - j2) / 6));
+
+            BigInteger c1 = j1 - 1;
+            BigInteger c2 = j2 - 1;
+
+            // Order of operations vital. Divide by two at end to avoid truncation of the integer types.
+            BigInteger o1 = (3 * (b1 * b1) + (c1 * b1)) / 2;
+            BigInteger o2 = (3 * (b2 * b2) + (c2 * b2)) / 2;
+
+            Debug.WriteLine(T);
+            Debug.WriteLine($"m1:{m1} j1:{j1} c1:{c1} b1:{b1} o1:{o1}");
+            Debug.WriteLine($"m2:{m2} j2:{j2} c2:{c2} b2:{b2} o2:{o2}");
+
+            return o1 + o2;
         }
 
         /// <summary>
@@ -365,7 +409,7 @@ namespace solver
         /// <returns></returns>
         public static BigInteger PolygonalNumber(BigInteger s, BigInteger n)
         {
-            return (s - 2) * (n * n - n) / 2 + n; 
+            return (s - 2) * (n * n - n) / 2 + n;
         }
 
         /// <summary>

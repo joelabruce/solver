@@ -1,5 +1,4 @@
-﻿using solver.PMath;
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
@@ -15,6 +14,38 @@ namespace solver
 
             //long start = 1;// (long) Math.Pow(10, 10);
             //long tasks = 50;
+
+            var exploratory = false;
+            if (exploratory)
+            {
+                for (BigInteger T = 1; T < 48; T++)
+                {
+                    BigInteger result = 0;
+                    BigInteger nmod3 = (-T).Mod(3);
+                    BigInteger mod3 = T.Mod(3);
+                    var ub = (T + (3 - T).Mod(3)) / 3;
+
+                    Console.WriteLine();
+                    Console.WriteLine($"{T} |{ub}| +");
+                    for (long i = 2; i <= ub; i++)
+                    {
+
+                        //long term1 = 3 * i - 2, i1 = (long)Math.Floor(term1 / 2d) - 2;
+                        //long term2 = 3 * i - 1, i2 = (long)Math.Floor(term2 / 2d) - 2;
+                        //long term3 = 3 * i - 0, i3 = (long)Math.Floor(term3 / 2d) - 2;
+                        //Console.WriteLine($"{term1,4}: {i1,4}, {term2,4}: {i2,4}, {term3,4}: {i3,4}");
+
+                        var term = 3 * i - (nmod3);
+                        //var j = (BigInteger)Math.Floor((double)term / 2) - 2;
+                        var j = term / 2 - 2;
+                        Console.WriteLine($"{j}");
+                        result += j;
+                    }
+
+                    Console.WriteLine($"={result}");
+                }
+                return;
+            }
 
             Console.WriteLine("0) Generate Universe of solutions");
             Console.WriteLine("1) Test and time strict triplet implementations");
@@ -45,14 +76,16 @@ namespace solver
                             var (msf, rf) = TimedFunc(() => _.StrictPartitionTriplets(T));
                             var (msf2, rf2) = TimedFunc(() => _.PhasedPentagonalTriplets(T));
                             var (msf3, rf3) = TimedFunc(() => _.SimpleTriplets(T));
+                            var (msf4, rf4) = TimedFunc(() => _.StrictPartitionTripletsAdd(T));
                             Console.WriteLine(T);
-                            //Console.WriteLine($"{r} in {ms}ms");
+                            Console.WriteLine($"{r} in {ms}ms");
                             Console.WriteLine($"{rf} in {msf}ms (f)");
                             //Console.WriteLine($"{rf2} in {msf2}ms (f2)");
                             Console.WriteLine($"{rf3} in {msf3}ms (f3)");
+                            Console.WriteLine($"{rf4} in {msf4}ms (f4)");
 
-                            if (r != rf2 || r != rf2 || r != rf3)
-                                Console.WriteLine($"Exception found! {T}");
+                            //if (r != rf2 || r != rf2 || r != rf3 || r != rf4)
+                            //    Console.WriteLine($"Exception found! {T}");
 
                             Console.WriteLine();
                             break;
@@ -75,7 +108,7 @@ namespace solver
                             break;
                         case 6:
                             //Console.Write($"{_.JoelSeries(T)}, ");
-                            Console.WriteLine($"{_.JoelSeries(T)}");
+                            Console.Write($"{_.JoelSeries(T)}, ");
                             break;
                         default:
                             break;
@@ -107,7 +140,8 @@ namespace solver
             return sw.ElapsedMilliseconds;
         }
 
-        public static void GenerateAllSolutionsForT(long start, long end) {
+        public static void GenerateAllSolutionsForT(long start, long end)
+        {
             for (long T = start; T <= end; T++)
             {
                 var n = _.nFromT(T);
@@ -132,7 +166,7 @@ namespace solver
                 Console.WriteLine($"{bound3 > long.MaxValue}");
             }
 
-            Segment[] segments = _.FrontLoadedThreadSegmentGenerator(threads, (long) bound3);
+            Segment[] segments = _.FrontLoadedThreadSegmentGenerator(threads, (long)bound3);
             var segmentCount = segments.Length;
 
             Task<BigInteger>[] tasks = new Task<BigInteger>[segmentCount];
@@ -153,7 +187,7 @@ namespace solver
             var counts = await Task.WhenAll(tasks);
 
             BigInteger result = 0;
-            foreach(var count in counts)
+            foreach (var count in counts)
             {
                 result += count;
             }
@@ -190,7 +224,7 @@ namespace solver
             {
                 quadsForQuints = 0;
 
-                BigInteger guess = _.PhasedPentagonalTriplets(T -i[0]);
+                BigInteger guess = _.PhasedPentagonalTriplets(T - i[0]);
 
                 if (includeBreakdown) Console.Write($"{i[0]} -> ({guess}) ");
                 U[3] = _.U_(4, T, i[0]);
@@ -284,9 +318,9 @@ namespace solver
                 U[1] = _.U_(2, T, i[0]);
                 for (i[1] = i[0] + 1; i[1] <= U[1]; i[1]++)
                 {
-                    U[0] = _.U_(1, T, i[0] + i[1]);                    
+                    U[0] = _.U_(1, T, i[0] + i[1]);
                     i[2] = U[0];
-                    
+
                     count++;
                     pairsForTriplets++;
                     //Console.WriteLine($"   {string.Join(", ", i.Skip(1))}");
